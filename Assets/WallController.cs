@@ -34,6 +34,11 @@ public class WallControl : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!GameTimer.isGameStarted || GameTimer.isGameEnded)
+        {
+            return;
+        }
+        
         Move();
     }
 }

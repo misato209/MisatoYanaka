@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BulletController : MonoBehaviour
 {
-    private Rigidbody rigidbody;
+    private Rigidbody rb;
     public float speed = 25.0f;
     Counter counter;
 
@@ -13,32 +13,69 @@ public class BulletController : MonoBehaviour
         this.counter = c;
     }
 
-    private void OnCollisionEnter(Collision collision) //Bulletが何かと衝突したとき
+    void Start()
     {
-        if (collision.gameObject.tag == "Target") //Targetというタグがついた物体だった場合
+        rb = GetComponent<Rigidbody>();
+        rb.velocity = new Vector3(0, 0, this.speed);
+
+        // 念のため、counterが入っていなければGameDirectorから取得
+        if (counter == null)
         {
-            if (counter != null)
-            {
-                counter.hitCount++;
-                Debug.Log(counter.hitCount + " Hit");
-            }
+            counter = GameObject.Find("GameDirector").GetComponent<Counter>();
         }
-        Invoke("destroyBullet", 1); //一秒後にdestroyBullet()を呼び出す
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (GameTimer.isGameEnded)
+        {
+            return;
+        }
+
+        if (counter == null)
+        {
+            Debug.LogError("Counterが取得できていません");
+            Destroy(this.gameObject);
+            return;
+        }
+
+        if (collision.gameObject.CompareTag("Target"))
+        {
+            TargetController targetController = collision.gameObject.GetComponent<TargetController>();
+
+            if (targetController != null)
+            {
+                targetController.HitTarget(counter);
+            }
+            else
+            {
+                Debug.LogError("TargetにTargetControllerがついていません");
+            }
+
+            Destroy(this.gameObject);
+        }
+        else if (collision.gameObject.CompareTag("BadTarget"))
+        {
+            counter.AddScore(-3);
+            Destroy(collision.gameObject);
+            Destroy(this.gameObject);
+            Debug.Log("BadTarget Hit");
+        }
+        else if (collision.gameObject.CompareTag("GoldTarget"))
+        {
+            counter.AddScore(3);
+            Destroy(collision.gameObject);
+            Destroy(this.gameObject);
+            Debug.Log("GoldTarget Hit");
+        }
+        else
+        {
+            Invoke("destroyBullet", 1);
+        }
     }
 
     private void destroyBullet()
     {
-        Destroy(this.gameObject); //Objectを消す       
-    }
-
-    void Start()
-    {
-        this.rigidbody = GetComponent<Rigidbody>();
-        this.rigidbody.velocity = new Vector3(0, 0, this.speed); //初速度の設定
-    }
-
-    void Update()
-    {
-
+        Destroy(this.gameObject);
     }
 }

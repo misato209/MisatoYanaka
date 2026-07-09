@@ -56,13 +56,34 @@ public class GunController : MonoBehaviour
 
     private void Shoot() //GunのBulletを生成するメソッド
     {
+        if (GameTimer.isGameEnded)
+        {
+            return;
+        }
+
         if(Input.GetMouseButtonDown(0)) //マウスの左クリックを押したとき
         {
+            if (!counter.UseBullet())
+            {
+                return;
+            }
+
             Vector3 bulletPosition = transform.position + new Vector3(0, 0, 0.9f);
             GameObject newBullet = Instantiate(this.bullet, bulletPosition, Quaternion.identity); //BulletをnewBulletという名前で生成
+            
             BulletController bulletController = newBullet.GetComponent<BulletController>(); //生成されたnewBullet内のBulletControllerを取得
-            bulletController.SetCounter(counter); //Startで取得したcounterを、BulletController.cs内のSetCounterという関数に代入、実行
+            bulletController.SetCounter(counter); 
+            
+            if (counter.BulletCount <= 0)
+            {
+                Invoke("CheckBulletEmpty", 2.0f);
+            }
         }
+    }
+
+    private void CheckBulletEmpty()
+    {
+        counter.CheckBulletEmpty();
     }
 
     void Start()
@@ -74,6 +95,11 @@ public class GunController : MonoBehaviour
 
     void Update()
     {
+        if (!GameTimer.isGameStarted || GameTimer.isGameEnded)
+        {
+            return;
+        }
+
         Move();
         Jump();
         Shoot();     
